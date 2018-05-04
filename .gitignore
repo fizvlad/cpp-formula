@@ -34,3 +34,5 @@
 # Codeblocks generated files and folders
 /bin/
 /obj/
+*.cbp
+*.depend
