@@ -21,5 +21,8 @@ int main()
     Formula f(str, actions);
     Formula::Sequence sequence = f.getSequence();
 
+    for (Formula::Step s : sequence) {
+        cout << s << endl;
+    }
     return 0;
 }
