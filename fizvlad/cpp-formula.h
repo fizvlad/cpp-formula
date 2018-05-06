@@ -83,10 +83,13 @@ namespace fizvlad {
         Sequence getSequence() {
             Sequence result;
             std::vector<std::string> aliases; // Array to store aliases
-            setUpAliases_(str_, &aliases);
+            setUpAliases_(str_, &aliases); // Parsing formula into array of aliases
+
             for (size_t i = 0; i < aliases.size(); i++) {
                 std::cout << aliasPrefix_ + std::to_string(i) << " = " << aliases[i] << std::endl;
             }
+
+            // Last alias is the final value
             return result;
         }
 
@@ -97,7 +100,8 @@ namespace fizvlad {
         std::string aliasPrefix_;
 
 
-        void setUpAliases_(std::string str, std::vector<std::string> *aliases) {
+        /// Creating array of aliases for given str and returns alias equal to str
+        std::string setUpAliases_(std::string str, std::vector<std::string> *aliases) {
             for (size_t i = 0; i < actions_.size(); i++) {
                 // For each action:
                 Action action = actions_[i];
@@ -111,23 +115,29 @@ namespace fizvlad {
                         break;
                     }
 
+                    std::string str_copy = str; // Copying initial string to place new aliases there
                     for (size_t j = 1; j < match.size(); j++) {
                         // Recursively processing each operand
-                        std::string sub = match[j].str();
-                        setUpAliases_(sub, aliases);
+                        std::string target = match[j].str();
+                        std::string sub = setUpAliases_(target, aliases);
+                        str_copy.replace(str_copy.find(target), target.length(), sub);
                     }
 
+                    str = str_copy; // Now will be using string where all parsed operand replaced with aliases
+                    std::regex_search(str, match, action.regexp);
                     std::string target = match[0]; // Saving target string
                     size_t aliasIndex = std::find(aliases->cbegin(), aliases->cend(), target) - aliases->cbegin();
                     // If this target already been met somewhere index will be correctly set
                     // Index = aliases.size() otherwise
                     str.replace(str.find(target), target.length(), aliasPrefix_ + std::to_string(aliasIndex));
+                    // Replaced found operation with alias
                     if (aliasIndex == aliases->size()) {
                         // Saving new alias
                         aliases->push_back(target);
                     }
                 }
             }
+            return str;
         }
     };
 
