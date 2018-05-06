@@ -12,7 +12,7 @@ namespace fizvlad {
     ///
     /// \brief Formula parser using regex
     ///
-    class Formula {
+    struct Formula {
     public:
 
         ///
@@ -27,15 +27,19 @@ namespace fizvlad {
             std::regex regexp;
 
 
-            Action(size_t o = 0, std::string r = "") : operandsAmount(o), regexp(r, std::regex_constants::ECMAScript) {
+            Action(size_t o = 0, std::string r = "") : operandsAmount(o), regexp(r, std::regex_constants::ECMAScript), regexp_str_(r) {
                 regexpCheck_();
             }
-            Action(size_t o, std::regex r) : operandsAmount(o), regexp(r) {
-                regexpCheck_();
+
+
+            std::string getStr() const {
+                return regexp_str_;
             }
 
 
         private:
+            std::string regexp_str_;
+
             bool regexpIsCorrect_() {
                 return regexp.mark_count() == operandsAmount;
             }
@@ -92,20 +96,20 @@ namespace fizvlad {
         typedef std::vector<Action> Actions;
 
 
-        Formula(std::string str, Actions actions, std::string aliasPrefix = "ALIAS_") : str_(str), actions_(actions), aliasPrefix_(aliasPrefix) {}
+        Formula(std::string s, Actions a, std::string p = "ALIAS_") : str(s), actions(a), prefix(p) {}
         Formula() = delete;
 
 
         Sequence getSequence() {
             Sequence result;
             std::vector<std::string> aliases; // Array to store aliases
-            std::string s = setUpAliases_(str_, &aliases); // Parsing formula into array of aliases. s is an alias of whole formula
+            std::string s = setUpAliases_(str, &aliases); // Parsing formula into array of aliases. s is an alias of whole formula
 
             for (size_t i = 0; i < aliases.size(); i++) {
-                //std::cout << aliasPrefix_ + std::to_string(i) << " = " << aliases[i] << std::endl; // LOG
+                //std::cout << prefix + std::to_string(i) << " = " << aliases[i] << std::endl; // LOG
                 Action action;
                 std::vector<Operand> operands;
-                for (Action a : actions_) {
+                for (Action a : actions) {
                     // Checking alias for each action
                     std::smatch m;
                     std::regex_search(aliases[i], m, a.regexp);
@@ -116,10 +120,10 @@ namespace fizvlad {
                         for (size_t i = 1; i < m.size(); i++) {
                             Operand o;
                             std::string m_s = m[i];
-                            if (m_s.find(aliasPrefix_) != std::string::npos) {
+                            if (m_s.find(prefix) != std::string::npos) {
                                 // This is an alias
                                 o.type = Alias;
-                                o.aliasId = std::stoi(m_s.substr(aliasPrefix_.size()));
+                                o.aliasId = std::stoi(m_s.substr(prefix.size()));
                             } else {
                                 o.type = String;
                                 o.str = m_s;
@@ -135,17 +139,19 @@ namespace fizvlad {
         }
 
 
-    private:
-        std::string str_;
-        Actions actions_;
-        std::string aliasPrefix_;
 
+        std::string str;
+        Actions actions;
+        std::string prefix;
+
+
+    private:
 
         /// Creating array of aliases for given str and returns alias equal to str
         std::string setUpAliases_(std::string str, std::vector<std::string> *aliases) {
-            for (size_t i = 0; i < actions_.size(); i++) {
+            for (size_t i = 0; i < actions.size(); i++) {
                 // For each action:
-                Action action = actions_[i];
+                Action action = actions[i];
                 while (true) {
                     // While we can still apply current action
                     std::smatch match;
@@ -172,7 +178,7 @@ namespace fizvlad {
                     size_t aliasIndex = std::find(aliases->cbegin(), aliases->cend(), target) - aliases->cbegin();
                     // If this target already been met somewhere index will be correctly set
                     // Index = aliases.size() otherwise
-                    str.replace(str.find(target), target.size(), aliasPrefix_ + std::to_string(aliasIndex));
+                    str.replace(str.find(target), target.size(), prefix + std::to_string(aliasIndex));
                     // Replaced found operation with alias
                     if (aliasIndex == aliases->size()) {
                         // Saving new alias
@@ -184,6 +190,9 @@ namespace fizvlad {
         }
     };
 
+    bool operator==(const Formula::Action &l, const Formula::Action &r) {
+        return l.getStr() == r.getStr();
+    }
 
     std::ostream &operator<<(std::ostream &out, const Formula::Step &step) {
         out << "Step #" << step.id << ". Depends on: ";

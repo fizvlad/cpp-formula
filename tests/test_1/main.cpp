@@ -22,7 +22,13 @@ int main()
     Formula::Sequence sequence = f.getSequence();
 
     for (Formula::Step s : sequence) {
-        cout << s << endl;
+        size_t index = 0;
+        for (; index < actions.size(); index++) {
+            if (actions[index] == s.action) {
+                break;
+            }
+        }
+        cout << s << endl << "    Action id: " << index << endl;
     }
     return 0;
 }
