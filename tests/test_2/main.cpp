@@ -21,13 +21,7 @@ int main()
     Formula::Sequence sequence = f.getSequence();
 
     for (Formula::Step s : sequence) {
-        size_t index = 0;
-        for (; index < actions.size(); index++) {
-            if (actions[index] == s.action) {
-                break;
-            }
-        }
-        cout << s << endl << "    Action id: " << index << endl;
+        cout << s << endl << "    Action id: " << f.getActionIndex(s.action) << endl;
     }
     return 0;
 }

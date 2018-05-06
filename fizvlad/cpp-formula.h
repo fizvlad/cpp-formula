@@ -54,14 +54,14 @@ namespace fizvlad {
         enum OperandType {String, Alias};
 
         ///
-        /// \brief Container with operand. Operand can be a str which is not matching any regexp or alias with aliasId
+        /// \brief Container with operand. Operand can be a str which is not matching any regexp or alias with aliasIndex
         ///
         struct Operand {
             /// Type of operand
             OperandType type = String;
 
             std::string str = "0";
-            size_t aliasId = 0;
+            size_t aliasIndex = 0;
         };
 
 
@@ -100,44 +100,45 @@ namespace fizvlad {
         Formula() = delete;
 
 
-        Sequence getSequence() {
-            Sequence result;
-            std::vector<std::string> aliases; // Array to store aliases
-            std::string s = setUpAliases_(str, &aliases); // Parsing formula into array of aliases. s is an alias of whole formula
+        ///
+        /// \brief Get sequence of steps for current string
+        ///
+        Sequence getSequence();
 
-            for (size_t i = 0; i < aliases.size(); i++) {
-                //std::cout << prefix + std::to_string(i) << " = " << aliases[i] << std::endl; // LOG
-                Action action;
-                std::vector<Operand> operands;
-                for (Action a : actions) {
-                    // Checking alias for each action
-                    std::smatch m;
-                    std::regex_search(aliases[i], m, a.regexp);
-                    if (m.size() != 0) {
-                        // Found action for given alias
-                        // TODO Probably it is possible to get all this information from setUpAliases_()
-                        action = a;
-                        for (size_t i = 1; i < m.size(); i++) {
-                            Operand o;
-                            std::string m_s = m[i];
-                            if (m_s.find(prefix) != std::string::npos) {
-                                // This is an alias
-                                o.type = Alias;
-                                o.aliasId = std::stoi(m_s.substr(prefix.size()));
-                            } else {
-                                o.type = String;
-                                o.str = m_s;
-                            }
-                            operands.push_back(o);
-                        }
-                        break;
-                    }
-                }
-                result.push_back(Step(i, action, operands));
+
+        ///
+        /// \brief Returns index of given action in actions
+        ///
+        /// Notice throws error on failure
+        size_t getActionIndex(Action action) throw(std::invalid_argument);
+
+
+        ///
+        /// \brief Generate solution using given vector of functions
+        ///
+        /// Notice: Functions must match actions
+        ///
+        /// \param resultType Type of result of handlerType functions
+        /// \param convertType Type of function converting string into type of arguments of handlerType
+        /// \param handlerType Type of function which take array of resulType and handles action
+        template <typename resultType, typename convertType, typename handlerType> resultType calculate(convertType converter, std::vector<handlerType> handlers) {
+            Sequence sequence = getSequence();
+            if (sequence.size() == 0) {
+                throw std::runtime_error("Empty sequence");
             }
-            return result;
+            std::vector<resultType> stepResults(sequence.size());
+            for (size_t i = 0; i < sequence.size(); i++) {
+                Step s = sequence[i];
+                std::vector<resultType> operands(s.operands.size());
+                for (size_t j = 0; j < s.operands.size(); j++) {
+                    Operand operand = s.operands[j];
+                    operands[j] = operand.type == String ? converter(operand.str) : stepResults[operand.aliasIndex];
+                }
+                resultType stepResult = (handlers[getActionIndex(s.action)])(operands);
+                stepResults[i] = stepResult;
+            }
+            return stepResults[stepResults.size() - 1];
         }
-
 
 
         std::string str;
@@ -148,67 +149,12 @@ namespace fizvlad {
     private:
 
         /// Creating array of aliases for given str and returns alias equal to str
-        std::string setUpAliases_(std::string str, std::vector<std::string> *aliases) {
-            for (size_t i = 0; i < actions.size(); i++) {
-                // For each action:
-                Action action = actions[i];
-                while (true) {
-                    // While we can still apply current action
-                    std::smatch match;
-                    std::regex_search(str, match, action.regexp);
-                    if (match.size() == 0) {
-                        // Stop if can not apply this action
-                        break;
-                    }
-
-                    std::string str_copy = str; // Copying initial string to place new aliases there
-                    for (size_t j = 1; j < match.size(); j++) {
-                        // Recursively processing each operand
-                        std::string target = match[j].str();
-                        std::string sub = setUpAliases_(target, aliases);
-                        str_copy.replace(str_copy.find(target), target.size(), sub);
-                    }
-
-                    str = str_copy; // Now will be using string where all parsed operand replaced with aliases
-                    std::regex_search(str, match, action.regexp);
-                    if (match.size() == 0) {
-                        throw std::runtime_error("Was not able to find action in str: " + str);
-                    }
-                    std::string target = match[0].str(); // Saving target string
-                    size_t aliasIndex = std::find(aliases->cbegin(), aliases->cend(), target) - aliases->cbegin();
-                    // If this target already been met somewhere index will be correctly set
-                    // Index = aliases.size() otherwise
-                    str.replace(str.find(target), target.size(), prefix + std::to_string(aliasIndex));
-                    // Replaced found operation with alias
-                    if (aliasIndex == aliases->size()) {
-                        // Saving new alias
-                        aliases->push_back(target);
-                    }
-                }
-            }
-            return str;
-        }
+        std::string setUpAliases_(std::string str, std::vector<std::string> *aliases);
     };
 
-    bool operator==(const Formula::Action &l, const Formula::Action &r) {
-        return l.getStr() == r.getStr();
-    }
+    bool operator==(const Formula::Action &l, const Formula::Action &r);
 
-    std::ostream &operator<<(std::ostream &out, const Formula::Step &step) {
-        out << "Step #" << step.id << ". Depends on: ";
-        for (Formula::Operand o : step.operands) {
-            switch (o.type) {
-                case Formula::String:
-                    out << o.str << " (String)";
-                    break;
-                case Formula::Alias:
-                    out << "step #"<< o.aliasId;
-                    break;
-            }
-            out << "; ";
-        }
-        return out;
-    }
+    std::ostream &operator<<(std::ostream &out, const Formula::Step &step);
 }
 
 #endif // CPP_FORMULA_H_INCLUDED
