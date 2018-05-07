@@ -9,15 +9,11 @@
 
 namespace fizvlad {
 
-    ///
-    /// \brief Formula parser using regex
-    ///
+    /// Formula parser using regex.
     struct Formula {
     public:
 
-        ///
-        /// \brief Container for operator characteristics
-        ///
+        /// Container for operator characteristics.
         struct Action {
             /// Amount of operands
             size_t operandsAmount;
@@ -53,9 +49,7 @@ namespace fizvlad {
 
         enum OperandType {String, Alias};
 
-        ///
-        /// \brief Container with operand. Operand can be a str which is not matching any regexp or alias with aliasIndex
-        ///
+        /// Container with operand. Operand can be a str which is not matching any regexp or alias with aliasIndex.
         struct Operand {
             /// Type of operand
             OperandType type = String;
@@ -65,9 +59,7 @@ namespace fizvlad {
         };
 
 
-        ///
-        /// \brief Container for information on each sequence step
-        ///
+        /// Container for information on each sequence step.
         struct Step {
             /// Step id. Unique for single Sequence
             size_t id;
@@ -82,17 +74,13 @@ namespace fizvlad {
         };
 
 
-        ///
-        /// \brief Sequence of steps in proper order
-        ///
-        /// First step must be done first
+        /// Sequence of steps in proper order.
+        /// First step must be done first.
         typedef std::vector<Step> Sequence;
 
 
-        ///
-        /// \brief Array of operations in order of priority decrease
-        ///
-        /// First action will be applied first
+        /// Array of operations in order of priority decrease.
+        /// First action will be applied first.
         typedef std::vector<Action> Actions;
 
 
@@ -100,24 +88,17 @@ namespace fizvlad {
         Formula() = delete;
 
 
-        ///
-        /// \brief Get sequence of steps for current string
-        ///
+        /// Get sequence of steps for current string.
         Sequence getSequence();
 
 
-        ///
-        /// \brief Returns index of given action in actions
-        ///
-        /// Notice throws error on failure
+        /// Returns index of given action in actions.
+        /// Notice throws error on failure.
         size_t getActionIndex(Action action) throw(std::invalid_argument);
 
 
-        ///
-        /// \brief Generate solution using given vector of functions
-        ///
-        /// Notice: Functions must match actions
-        ///
+        /// Generate solution using given vector of functions.
+        /// Notice: Functions must match actions.
         /// \param resultType Type of result of handlerType functions
         /// \param convertType Type of function converting string into type of arguments of handlerType
         /// \param handlerType Type of function which take array of resulType and handles action
@@ -148,7 +129,7 @@ namespace fizvlad {
 
     private:
 
-        /// Creating array of aliases for given str and returns alias equal to str
+        /// Creating array of aliases for given str and returns alias equal to str.
         std::string setUpAliases_(std::string str, std::vector<std::string> *aliases);
     };
 
