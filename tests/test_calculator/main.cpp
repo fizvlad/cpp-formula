@@ -41,12 +41,19 @@ int main()
     function<float(string)> converter = [](string str){return stof(str);};
 
     std::string input;
+    cout << " < ";
     getline(cin, input);
     while (input != "") {
         f.str = input;
-        float solution = f.calculate<float>(converter, func);
-        cout << solution << endl;
+        try {
+            float solution = f.calculate<float>(converter, func);
+            cout << " > " << solution;
+        } catch (std::exception e) {
+            cout << " ! Error occured: " << e.what();
+        }
+        cout << endl << endl;
 
+        cout << " < ";
         getline(cin, input);
     }
     return 0;
