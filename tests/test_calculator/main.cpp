@@ -11,10 +11,10 @@ int main()
     string str = "";
 
     Formula::Action a_brackets(1, R"RAW_LITERAL(\(([^\(\)]+)\))RAW_LITERAL");
-    Formula::Action a_plus(2,     R"RAW_LITERAL(([^\s+*\/\-]+)\s?\+\s?([^\s+*\/\-]+))RAW_LITERAL");
-    Formula::Action a_minus(2,    R"RAW_LITERAL(([^\s+*\/\-]+)\s?\-\s?([^\s+*\/\-]+))RAW_LITERAL");
-    Formula::Action a_multiply(2, R"RAW_LITERAL(([^\s+*\/\-]+)\s?\*\s?([^\s+*\/\-]+))RAW_LITERAL");
-    Formula::Action a_divide(2,   R"RAW_LITERAL(([^\s+*\/\-]+)\s?\/\s?([^\s+*\/\-]+))RAW_LITERAL");
+    Formula::Action a_plus(2,     R"RAW_LITERAL(([^\s+*\/\-]+)\s*\+\s*([^\s+*\/\-]+))RAW_LITERAL");
+    Formula::Action a_minus(2,    R"RAW_LITERAL(([^\s+*\/\-]+)\s*\-\s*([^\s+*\/\-]+))RAW_LITERAL");
+    Formula::Action a_multiply(2, R"RAW_LITERAL(([^\s+*\/\-]+)\s*\*\s*([^\s+*\/\-]+))RAW_LITERAL");
+    Formula::Action a_divide(2,   R"RAW_LITERAL(([^\s+*\/\-]+)\s*\/\s*([^\s+*\/\-]+))RAW_LITERAL");
 
     Formula::Actions actions = {a_brackets, a_multiply, a_divide, a_plus, a_minus};
 
