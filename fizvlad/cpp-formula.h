@@ -105,7 +105,7 @@ namespace fizvlad {
         template <typename resultType, typename convertType, typename handlerType> resultType calculate(convertType converter, std::vector<handlerType> handlers) {
             Sequence sequence = getSequence();
             if (sequence.size() == 0) {
-                throw std::runtime_error("Empty sequence");
+                return converter(str);
             }
             std::vector<resultType> stepResults(sequence.size());
             for (size_t i = 0; i < sequence.size(); i++) {
