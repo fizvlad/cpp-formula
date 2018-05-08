@@ -63,19 +63,25 @@ namespace fizvlad {
         /// Container with operand. Operand can be a str which is not matching any regexp or alias with aliasIndex.
         struct Operand {
             /// Type of operand
-            OperandType type = String;
+            OperandType type;
 
-            std::string str = "0";
-            size_t aliasIndex = 0;
+            std::string str;
+            size_t aliasIndex;
+
+            Operand(std::string s = "") : type(String), str(s), aliasIndex(0) {}
+            Operand(size_t i) : type(Alias), str(""), aliasIndex(i) {}
         };
 
 
+        /// Array of operands
+        typedef std::vector<Operand> Dependencies;
+
         /// Set of unique operands
-        typedef std::set<Operand> Dependencies;
+        typedef std::set<Operand> Dependencies_set;
 
 
         /// Get array of strings of dependencies
-        Dependencies getExternalDependencies();
+        Dependencies_set getExternalDependencies();
 
 
         /// Container for information on each sequence step.

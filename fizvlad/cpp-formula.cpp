@@ -30,7 +30,7 @@ namespace fizvlad {
                             o.type = String;
                             o.str = m_s;
                         }
-                        operands.insert(o);
+                        operands.push_back(o);
                     }
                     break;
                 }
@@ -93,8 +93,8 @@ namespace fizvlad {
     }
 
 
-    Formula::Dependencies Formula::getExternalDependencies() {
-        Formula::Dependencies result;
+    Formula::Dependencies_set Formula::getExternalDependencies() {
+        Formula::Dependencies_set result;
         Formula::Sequence sequence = getSequence();
         for (Formula::Step step : sequence) {
             for (Formula::Operand operand : step.operands) {
@@ -118,7 +118,11 @@ namespace fizvlad {
 
     bool operator<(const Formula::Operand &l, const Formula::Operand &r) {
         //TODO finish
-        return l.type == r.type && ((l.type == Formula::String && l.str == r.str) || (l.type == Formula::Alias && l.aliasIndex == r.aliasIndex));
+        if (l.type == r.type) {
+            return (l.type == Formula::String && l.str < r.str) || (l.type == Formula::Alias && l.aliasIndex < r.aliasIndex);
+        } else {
+            return l.type == Formula::String;
+        }
     }
 
 
