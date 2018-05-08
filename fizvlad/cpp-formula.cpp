@@ -10,7 +10,7 @@ namespace fizvlad {
         for (size_t i = 0; i < aliases.size(); i++) {
             //std::cout << prefix + std::to_string(i) << " = " << aliases[i] << std::endl; // LOG
             Formula::Action action;
-            std::vector<Operand> operands;
+            Dependencies operands;
             for (Formula::Action a : actions) {
                 // Checking alias for each action
                 std::smatch m;
@@ -30,7 +30,7 @@ namespace fizvlad {
                             o.type = String;
                             o.str = m_s;
                         }
-                        operands.push_back(o);
+                        operands.insert(o);
                     }
                     break;
                 }
@@ -93,8 +93,32 @@ namespace fizvlad {
     }
 
 
+    Formula::Dependencies Formula::getExternalDependencies() {
+        Formula::Dependencies result;
+        Formula::Sequence sequence = getSequence();
+        for (Formula::Step step : sequence) {
+            for (Formula::Operand operand : step.operands) {
+                if (operand.type == Formula::String && std::find(result.cbegin(), result.cend(),operand) == result.cend()) {
+                    result.insert(operand);
+                }
+            }
+        }
+        return result;
+    }
+
+
     bool operator==(const Formula::Action &l, const Formula::Action &r) {
         return l.getStr() == r.getStr();
+    }
+
+
+    bool operator==(const Formula::Operand &l, const Formula::Operand &r) {
+        return l.type == r.type && ((l.type == Formula::String && l.str == r.str) || (l.type == Formula::Alias && l.aliasIndex == r.aliasIndex));
+    }
+
+    bool operator<(const Formula::Operand &l, const Formula::Operand &r) {
+        //TODO finish
+        return l.type == r.type && ((l.type == Formula::String && l.str == r.str) || (l.type == Formula::Alias && l.aliasIndex == r.aliasIndex));
     }
 
 

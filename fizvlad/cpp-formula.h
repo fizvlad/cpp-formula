@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <regex>
 #include <iostream>
 #include <exception>
@@ -47,6 +48,16 @@ namespace fizvlad {
         };
 
 
+        /// Returns index of given action in actions.
+        /// Notice throws error on failure.
+        size_t getActionIndex(Action action) throw(std::invalid_argument);
+
+
+        /// Array of operations in order of priority decrease.
+        /// First action will be applied first.
+        typedef std::vector<Action> Actions;
+
+
         enum OperandType {String, Alias};
 
         /// Container with operand. Operand can be a str which is not matching any regexp or alias with aliasIndex.
@@ -59,6 +70,14 @@ namespace fizvlad {
         };
 
 
+        /// Set of unique operands
+        typedef std::set<Operand> Dependencies;
+
+
+        /// Get array of strings of dependencies
+        Dependencies getExternalDependencies();
+
+
         /// Container for information on each sequence step.
         struct Step {
             /// Step id. Unique for single Sequence
@@ -68,9 +87,9 @@ namespace fizvlad {
             Action action;
 
             /// Ids of operands of this Sequence
-            std::vector<Operand> operands;
+            Dependencies operands;
 
-            Step(size_t i, Action a, std::vector<Operand> oi) : id(i), action(a), operands(oi) {}
+            Step(size_t i, Action a, Dependencies oi) : id(i), action(a), operands(oi) {}
         };
 
 
@@ -79,22 +98,8 @@ namespace fizvlad {
         typedef std::vector<Step> Sequence;
 
 
-        /// Array of operations in order of priority decrease.
-        /// First action will be applied first.
-        typedef std::vector<Action> Actions;
-
-
-        Formula(std::string s, Actions a, std::string p = "ALIAS_") : str(s), actions(a), prefix(p) {}
-        Formula() = delete;
-
-
         /// Get sequence of steps for current string.
         Sequence getSequence();
-
-
-        /// Returns index of given action in actions.
-        /// Notice throws error on failure.
-        size_t getActionIndex(Action action) throw(std::invalid_argument);
 
 
         /// Generate solution using given vector of functions.
@@ -110,10 +115,10 @@ namespace fizvlad {
             std::vector<resultType> stepResults(sequence.size());
             for (size_t i = 0; i < sequence.size(); i++) {
                 Step s = sequence[i];
-                std::vector<resultType> operands(s.operands.size());
-                for (size_t j = 0; j < s.operands.size(); j++) {
-                    Operand operand = s.operands[j];
-                    operands[j] = operand.type == String ? converter(operand.str) : stepResults[operand.aliasIndex];
+                std::vector<resultType> operands;
+                operands.reserve(s.operands.size());
+                for (Operand operand : s.operands) {
+                    operands.push_back(operand.type == String ? converter(operand.str) : stepResults[operand.aliasIndex]);
                 }
                 resultType stepResult = (handlers[getActionIndex(s.action)])(operands);
                 stepResults[i] = stepResult;
@@ -122,8 +127,17 @@ namespace fizvlad {
         }
 
 
+        Formula(std::string s, Actions a, std::string p = "ALIAS_") : str(s), actions(a), prefix(p) {}
+        Formula() = delete;
+
+
+        /// Input string
         std::string str;
+
+        /// Array of defined actions
         Actions actions;
+
+        /// Alias prefix
         std::string prefix;
 
 
@@ -134,6 +148,9 @@ namespace fizvlad {
     };
 
     bool operator==(const Formula::Action &l, const Formula::Action &r);
+
+    bool operator==(const Formula::Operand &l, const Formula::Operand &r);
+    bool operator<(const Formula::Operand &l, const Formula::Operand &r);
 
     std::ostream &operator<<(std::ostream &out, const Formula::Step &step);
 }
